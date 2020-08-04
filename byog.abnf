@@ -1,0 +1,63 @@
+space = *LF *WSP
+name = 1*(ALPHA / DIGIT / "_" / "-")
+block-start = "{"
+block-end = "}"
+open-bracket = "("
+closing-bracket = ")"
+open-angle-bracket = "<"
+closing-angle-bracket = ">"
+open-square-bracket = "["
+closing-square-bracket = "]"
+comma = ","
+
+string = DQUOTE *<any VCHAR except DQUOTE> DQUOTE
+positive-integer = 1*DIGIT
+number = ["-"] 1*DIGIT ["." 1*DIGIT]
+true = "true"
+false = "false"
+boolean = true / false
+primitive = string / number / boolean / list
+struct = name open-bracket space [primitive space *(comma space primitive space)] closing-bracket
+
+property = name
+property-assignment = space "=" space
+property-init-value = primitive / struct
+property-initialization = property-assignment property-init-value
+property-declaration = space property [property-initialization]
+
+entity-prefix = "#"
+entity = entity-prefix name
+entity-content = block-start *property-declaration space block-end
+entity-declaration = entity space entity-content
+
+variable = name
+context-prefix = "@"
+context-variable = context-prefix name
+property-accessor = "."
+property-access = *(property-accessor property)
+value-property-access = (entity / context-variable / variable) property-access
+atom = primitive / state / value-property-access
+
+add-sub = (mult-div-mod / func-call / atom) 1*(space ("+" / "-") space (mult-div-mod / func-call / atom))
+mult-div-mod = (func-call / atom) 1*(space ("*" / "/" / "%") space (func-call / atom))
+arithmetic = add-sub / mult-div-mod
+comparison = (arithmetic / func-call / atom) space
+    ("<=" / "<"/ "==" / "!=" / ">=" / ">") space
+    (arithmetic / func-call / atom)
+ternary = (comparison / func-call / atom) space "?" space expression space ":" space expression
+list = open-square-bracket space [expression *(space comma space expression) space] closing-square-bracket
+
+func-call = name open-bracket space [expression *(space comma space expression) space] closing-bracket
+expression = ternary / comparison / arithmetic / func-call / list / atom
+assignment = (entity / context-variable / variable) property-access property-assignment expression
+statement = assignment / func-call
+
+event = open-bracket name closing-bracket
+event-content = block-start *(space statement) space block-end
+event-declaration = space event space event-content
+
+state = open-angle-bracket name closing-angle-bracket
+state-content = block-start *event-declaration space block-end
+state-declaration = state space state-content
+
+game = space 1*((entity-declaration / state-declaration) space)
